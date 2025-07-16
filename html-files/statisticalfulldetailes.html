@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Church Statistics Reports</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f8fafc;
+    }
+    
+    .form-section {
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    }
+    
+    .table-section {
+      background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+    }
+    
+    .btn-primary {
+      background-color: #16A34A;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+      background-color: #60A5FA;
+      transform: translateY(-2px);
+    }
+    
+    .btn-danger {
+      background-color: #ef4444;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-danger:hover {
+      background-color: #dc2626;
+      transform: translateY(-2px);
+    }
+    
+    .btn-success {
+      background-color: #16A34A;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-success:hover {
+      background-color: #059669;
+      transform: translateY(-2px);
+    }
+    
+    .btn-secondary {
+      background-color: #64748b;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-secondary:hover {
+      background-color: #475569;
+      transform: translateY(-2px);
+    }
+    
+    input:focus, select:focus {
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+      border-color: #16A34A;
+    }
+    
+    .stat-card {
+      transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+  <script>
+    let datasets = JSON.parse(localStorage.getItem('churchStats') || '[]');
+
+    function saveDataset() {
+      const form = document.forms['statsForm'];
+      const entry = {};
+      for (let i = 0; i < form.elements.length; i++) {
+        const el = form.elements[i];
+        if (el.name) entry[el.name] = el.value;
+      }
+      
+      // Validate required fields
+      if (!entry.church) {
+        showAlert('Church name is required!', 'error');
+        return;
+      }
+      
+      // Calculate end members
+      const start = parseInt(entry.start || 0);
+      const bapt = parseInt(entry.bapt || 0);
+      const lettersin = parseInt(entry.lettersin || 0);
+      const lettersout = parseInt(entry.lettersout || 0);
+      const dropped = parseInt(entry.dropped || 0);
+      const deaths = parseInt(entry.deaths || 0);
+      
+      entry.end = start + bapt + lettersin - lettersout - dropped - deaths;
+      form.end.value = entry.end;
+      
+      datasets.push(entry);
+      localStorage.setItem('churchStats', JSON.stringify(datasets));
+      renderTable();
+      form.reset();
+      showAlert('Dataset saved successfully!', 'success');
+    }
+
+    function deleteDataset(index) {
+      if (confirm('Are you sure you want to delete this dataset?')) {
+        datasets.splice(index, 1);
+        localStorage.setItem('churchStats', JSON.stringify(datasets));
+        renderTable();
+        showAlert('Dataset deleted successfully!', 'success');
+      }
+    }
+
+    function editDataset(index) {
+      const form = document.forms['statsForm'];
+      const data = datasets[index];
+      for (let key in data) {
+        if (form[key]) form[key].value = data[key];
+      }
+      deleteDataset(index);
+      document.getElementById('form-title').textContent = 'Edit Dataset';
+      document.getElementById('save-btn').textContent = 'Update';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      showAlert('Dataset loaded for editing!', 'info');
+    }
+
+    function downloadPDF(index = null) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      
+      // Add header
+      doc.setFontSize(18);
+      doc.setTextColor(40, 53, 147);
+      doc.text('Church Statistics Report', 105, 15, { align: 'center' });
+      
+      doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0);
+      
+      const dataToDownload = index !== null ? [datasets[index]] : datasets;
+      let y = 30;
+      
+      dataToDownload.forEach((entry, i) => {
+        // Dataset header
+        doc.setFontSize(14);
+        doc.setTextColor(30, 58, 138);
+        doc.text(`Dataset ${i + 1}: ${entry.church || 'Unnamed Church'}`, 14, y);
+        y += 8;
+        
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+        
+        // Create two columns
+        let x1 = 14;
+        let x2 = 110;
+        let yOffset = 0;
+        
+        Object.entries(entry).forEach(([key, value]) => {
+          if (key === 'church') return;
+          
+          const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+          
+          if (y + yOffset > 280) {
+            doc.addPage();
+            y = 20;
+            yOffset = 0;
+          }
+          
+          if (x1 < 100) {
+            doc.text(`${label}: ${value}`, x1, y + yOffset);
+            yOffset += 6;
+          } else {
+            doc.text(`${label}: ${value}`, x2, y + yOffset);
+            yOffset += 6;
+          }
+        });
+        
+        y += yOffset + 10;
+      });
+      
+      // Add footer
+      doc.setFontSize(8);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Generated on ${new Date().toLocaleString()}`, 105, 290, { align: 'center' });
+      
+      const filename = index !== null ? `church_stats_${entry.church || 'dataset'}.pdf` : 'church_statistics_report.pdf';
+      doc.save(filename);
+      showAlert('PDF downloaded successfully!', 'success');
+    }
+
+    function renderTable() {
+      const table = document.getElementById('datasetTable');
+      table.innerHTML = `
+        <thead>
+          <tr class="bg-green-600 text-white">
+            <th class="py-3 px-4 text-left rounded-tl-lg">Church</th>
+            <th class="py-3 px-4 text-left">District</th>
+            <th class="py-3 px-4 text-left">Submitted By</th>
+            <th class="py-3 px-4 text-left">Date</th>
+            <th class="py-3 px-4 text-left">Members</th>
+            <th class="py-3 px-4 text-left">Attendance</th>
+            <th class="py-3 px-4 text-left rounded-tr-lg">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      `;
+      
+      const tableBody = document.getElementById('tableBody');
+      tableBody.innerHTML = '';
+      
+      if (datasets.length === 0) {
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="4" class="py-4 px-4 text-center text-gray-500">
+              No datasets saved yet. Add your first dataset above.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+      
+      datasets.forEach((entry, i) => {
+        const row = document.createElement('tr');
+        row.className = 'border-b border-gray-200 hover:bg-gray-50';
+        
+        row.innerHTML = `
+          <td class="py-3 px-4 font-medium">${entry.church || '-'}</td>
+          <td class="py-3 px-4">${entry.district || '-'}</td>
+          <td class="py-3 px-4">${entry.submitter || '-'}</td>
+          <td class="py-3 px-4">${entry.submissionDate ? new Date(entry.submissionDate).toLocaleDateString() : '-'}</td>
+          <td class="py-3 px-4">
+            <div>Start: ${entry.start || '0'}</div>
+            <div>Bapt: ${entry.bapt || '0'}</div>
+            <div>Letters: +${entry.lettersin || '0'} / -${entry.lettersout || '0'}</div>
+            <div>Losses: -${(parseInt(entry.dropped || 0) + parseInt(entry.deaths || 0))}</div>
+            <div class="font-semibold">End: ${entry.end || '0'}</div>
+          </td>
+          <td class="py-3 px-4">
+            <div>2nd: ${entry.att2 || '0'}</div>
+            <div>7th: ${entry.att7 || '0'}</div>
+            <div>Avg: ${Math.round((parseInt(entry.att2 || 0) + parseInt(entry.att7 || 0)) / 2)}</div>
+          </td>
+          <td class="py-3 px-4 flex flex-wrap gap-2">
+            <button onclick="editDataset(${i})" class="btn-primary text-white px-3 py-1 rounded flex items-center gap-1 text-sm">
+              <i class="fas fa-edit"></i> Edit
+            </button>
+            <button onclick="deleteDataset(${i})" class="btn-danger text-white px-3 py-1 rounded flex items-center gap-1 text-sm">
+              <i class="fas fa-trash"></i> Delete
+            </button>
+            <button onclick="downloadPDF(${i})" class="btn-secondary text-white px-3 py-1 rounded flex items-center gap-1 text-sm">
+              <i class="fas fa-file-pdf"></i> PDF
+            </button>
+          </td>
+        `;
+        
+        tableBody.appendChild(row);
+      });
+      
+      // Update summary cards
+      updateSummaryCards();
+    }
+    
+    function updateSummaryCards() {
+      const summaryContainer = document.getElementById('summaryCards');
+      
+      if (datasets.length === 0) {
+        summaryContainer.innerHTML = `
+          <div class="col-span-3 text-center py-8 text-gray-500">
+            No data available for summary. Add datasets to see statistics.
+          </div>
+        `;
+        return;
+      }
+      
+      // Calculate totals
+      let totalChurches = 0;
+      let totalMembers = 0;
+      let totalBaptisms = 0;
+      let totalAttendance = 0;
+      
+      datasets.forEach(entry => {
+        totalChurches += parseInt(entry.churches || 0);
+        totalMembers += parseInt(entry.end || 0);
+        totalBaptisms += parseInt(entry.bapt || 0);
+        totalAttendance += (parseInt(entry.att2 || 0) + parseInt(entry.att7 || 0)) / 2;
+      });
+      
+      const avgAttendance = datasets.length > 0 ? Math.round(totalAttendance / datasets.length) : 0;
+      
+      summaryContainer.innerHTML = `
+        <div class="stat-card bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-500">Total Churches</p>
+              <h3 class="text-2xl font-bold">${totalChurches}</h3>
+            </div>
+            <div class="bg-green-100 p-3 rounded-full">
+              <i class="fas fa-church text-blue-500 text-xl"></i>
+            </div>
+          </div>
+        </div>
+        
+        <div class="stat-card bg-white p-6 rounded-lg shadow-md border-l-4 border-green-500">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-500">Total Members</p>
+              <h3 class="text-2xl font-bold">${totalMembers}</h3>
+              <p class="text-sm text-gray-500">Start: ${datasets.reduce((sum, d) => sum + parseInt(d.start || 0), 0)}</p>
+              <p class="text-sm text-gray-500">End: ${totalMembers}</p>
+            </div>
+            <div class="bg-green-100 p-3 rounded-full">
+              <i class="fas fa-users text-green-500 text-xl"></i>
+            </div>
+          </div>
+        </div>
+        
+        <div class="stat-card bg-white p-6 rounded-lg shadow-md border-l-4 border-purple-500">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-500">Total Baptisms</p>
+              <h3 class="text-2xl font-bold">${totalBaptisms}</h3>
+              <p class="text-sm text-gray-500">Letters In: ${datasets.reduce((sum, d) => sum + parseInt(d.lettersin || 0), 0)}</p>
+              <p class="text-sm text-gray-500">Letters Out: ${datasets.reduce((sum, d) => sum + parseInt(d.lettersout || 0), 0)}</p>
+            </div>
+            <div class="bg-purple-100 p-3 rounded-full">
+              <i class="fas fa-water text-purple-500 text-xl"></i>
+            </div>
+          </div>
+        </div>
+        
+        <div class="stat-card bg-white p-6 rounded-lg shadow-md border-l-4 border-yellow-500">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-500">Total Attendance</p>
+              <h3 class="text-2xl font-bold">${totalAttendance}</h3>
+              <p class="text-sm text-gray-500">2nd Sabbath: ${datasets.reduce((sum, d) => sum + parseInt(d.att2 || 0), 0)}</p>
+              <p class="text-sm text-gray-500">7th Sabbath: ${datasets.reduce((sum, d) => sum + parseInt(d.att7 || 0), 0)}</p>
+            </div>
+            <div class="bg-yellow-100 p-3 rounded-full">
+              <i class="fas fa-user-friends text-yellow-500 text-xl"></i>
+            </div>
+          </div>
+        </div>
+        
+        <div class="stat-card bg-white p-6 rounded-lg shadow-md border-l-4 border-red-500">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-500">Losses</p>
+              <h3 class="text-2xl font-bold">${datasets.reduce((sum, d) => sum + parseInt(d.dropped || 0) + parseInt(d.deaths || 0), 0)}</h3>
+              <p class="text-sm text-gray-500">Dropped: ${datasets.reduce((sum, d) => sum + parseInt(d.dropped || 0), 0)}</p>
+              <p class="text-sm text-gray-500">Deaths: ${datasets.reduce((sum, d) => sum + parseInt(d.deaths || 0), 0)}</p>
+            </div>
+            <div class="bg-red-100 p-3 rounded-full">
+              <i class="fas fa-user-minus text-red-500 text-xl"></i>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    
+    function showAlert(message, type = 'info') {
+      const alertBox = document.getElementById('alert-box');
+      let bgColor = 'bg-green-100 border-blue-400 text-blue-700';
+      
+      if (type === 'error') {
+        bgColor = 'bg-red-100 border-red-400 text-red-700';
+      } else if (type === 'success') {
+        bgColor = 'bg-green-100 border-green-400 text-green-700';
+      } else if (type === 'warning') {
+        bgColor = 'bg-yellow-100 border-yellow-400 text-yellow-700';
+      }
+      
+      alertBox.innerHTML = `
+        <div class="alert ${bgColor} border px-4 py-3 rounded relative mb-4" role="alert">
+          <span class="block sm:inline">${message}</span>
+          <span class="absolute top-0 bottom-0 right-0 px-4 py-3" onclick="this.parentElement.remove()">
+            <svg class="fill-current h-6 w-6" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+              <title>Close</title>
+              <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/>
+            </svg>
+          </span>
+        </div>
+      `;
+      
+      // Auto-hide after 5 seconds
+      setTimeout(() => {
+        const alert = document.querySelector('.alert');
+        if (alert) alert.remove();
+      }, 5000);
+    }
+
+    window.onload = function() {
+      renderTable();
+      document.getElementById('form-title').textContent = 'Add New Dataset';
+      document.getElementById('save-btn').textContent = 'Save';
+    };
+  </script>
+</head>
+<body class="min-h-screen">
+  <div class="container mx-auto px-4 py-8 max-w-6xl">
+    
+     <!-- Header/Navigation -->
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center">
+               <div><img src="/image-files/logo-sda/adventist-symbol--treefrog.png" alt="SDA Logo"  class="w-10 h-10 object-cover"></div>
+                <a href="index.html" class="text-2xl font-bold text-green-600">Copperbelt Zambia Conference</a>
+            </div>
+            
+            <!-- Desktop Navigation -->
+            <nav class="hidden md:flex space-x-8">
+
+                <a href="index.html" class="text-green-800 font-medium hover:tex0t-green-600 transition">Home</a>
+                <a href="archives.html" class="text-gray-700 hover:text-green-600 transition">Sermons</a>
+                <a href="eventsandnews.html" class="text-gray-700 hover:text-green-600 transition">News</a>
+                <a href="eventsandnews.html" class="text-gray-700 hover:text-green-600 transition">Events</a>
+                <a href="archives.html" class="text-gray-700 hover:text-green-600 transition">Gallery</a>
+
+            </nav>
+            
+            <!-- Mobile menu button -->
+            <button id="menu-toggle" class="md:hidden text-gray-700 focus:outline-none">
+                <i class="fas fa-bars text-2xl"></i>
+            </button>
+        </div>
+        
+        <!-- Mobile Navigation -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white w-full px-4 pb-4">
+            <div class="flex flex-col space-y-3">
+                <a href="index.html" class="text-green-600 font-medium py-2 border-b">Home</a>
+                <a href="archives.html" class="text-gray-700 py-2 border-b">Sermons</a>
+                <a href="eventsandnews.html" class="text-gray-700 py-2 border-b">News</a>
+                <a href="eventsandnews.html" class="text-gray-700 py-2 border-b">Events</a>
+                <a href="archives.html" class="text-gray-700 py-2 border-b">Gallery</a>
+
+            </div>
+        </div>
+    </header>
+
+
+
+
+    <!-- Header -->
+    <div class="mb-8 text-center">
+      <h1 class="text-3xl md:text-4xl font-bold text-green-800 mb-2">
+        <i class="fas fa-church mr-2"></i> Church Statistics Reports
+      </h1>
+      <p class="text-gray-600 max-w-2xl mx-auto">
+        Track and analyze your church's growth, attendance, and membership statistics
+      </p>
+    </div>
+    
+    <!-- Alert Box -->
+    <div id="alert-box" class="fixed top-4 right-4 z-50 w-full max-w-sm"></div>
+    
+    <!-- Form Section -->
+    <section class="form-section rounded-xl shadow-md p-6 mb-8">
+      <h2 id="form-title" class="text-2xl font-bold text-green-900 mb-6"></h2>
+      
+      <form name="statsForm" onsubmit="saveDataset(); return false;" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Church Info -->
+        <div class="space-y-4">
+          <h3 class="font-semibold text-green-700 border-b pb-2">
+            <i class="fas fa-info-circle mr-2"></i>Church Information
+          </h3>
+          
+          <div>
+            <label class="block text-gray-700 mb-1">Church Name*</label>
+            <input type="text" name="church" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300" required>
+          </div>
+
+          <div>
+            <label class="block text-gray-700 mb-1">District*</label>
+            <input type="text" name="district" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300" required>
+          </div>
+          
+          <div>
+            <label class="block text-gray-700 mb-1">Submitted By*</label>
+            <input type="text" name="submitter" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300" required>
+          </div>
+
+          <div>
+            <label class="block text-gray-700 mb-1">Submission Date*</label>
+            <input type="date" name="submissionDate" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300" required>
+          </div>
+          
+          <div>
+            <label class="block text-gray-700 mb-1">Number of Churches</label>
+            <input type="number" name="churches" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300">
+          </div>
+          
+          <div>
+            <label class="block text-gray-700 mb-1">Number of Companies</label>
+            <input type="number" name="companies" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300">
+          </div>
+        </div>
+        
+        <!-- Attendance -->
+        <div class="space-y-4">
+          <h3 class="font-semibold text-green-700 border-b pb-2">
+            <i class="fas fa-users mr-2"></i>Attendance
+          </h3>
+          
+          <div>
+            <label class="block text-gray-700 mb-1">Attendance (2nd Sabbath)</label>
+            <input type="number" name="att2" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300">
+          </div>
+          
+          <div>
+            <label class="block text-gray-700 mb-1">Attendance (7th Sabbath)</label>
+            <input type="number" name="att7" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300">
+          </div>
+          
+          <div>
+            <label class="block text-gray-700 mb-1">SS Attendance (2nd Sabbath)</label>
+            <input type="number" name="ss2" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300">
+          </div>
+          
+          <div>
+            <label class="block text-gray-700 mb-1">SS Attendance (7th Sabbath)</label>
+            <input type="number" name="ss7" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300">
+          </div>
+        </div>
+        
+        <!-- Membership -->
+        <div class="space-y-4">
+          <h3 class="font-semibold text-green-700 border-b pb-2">
+            <i class="fas fa-user-friends mr-2"></i>Membership
+          </h3>
+          
+          <div>
+            <label class="block text-gray-700 mb-1">Members at Start</label>
+            <input type="number" name="start" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300">
+          </div>
+          
+          <div>
+            <label class="block text-gray-700 mb-1">Baptised</label>
+            <input type="number" name="bapt" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300">
+          </div>
+          
+          <div>
+            <label class="block text-gray-700 mb-1">Letters Received</label>
+            <input type="number" name="lettersin" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300">
+          </div>
+          
+          <div>
+            <label class="block text-gray-700 mb-1">Letters Granted</label>
+            <input type="number" name="lettersout" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300">
+          </div>
+          
+          <div>
+            <label class="block text-gray-700 mb-1">Dropped</label>
+            <input type="number" name="dropped" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300">
+          </div>
+          
+          <div>
+            <label class="block text-gray-700 mb-1">Deaths</label>
+            <input type="number" name="deaths" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300">
+          </div>
+          
+          <div>
+            <label class="block text-gray-700 mb-1">Members at End</label>
+            <input type="number" name="end" class="w-full px-4 py-2 border rounded-lg bg-gray-100" readonly>
+          </div>
+        </div>
+        
+        <!-- Submit Button -->
+        <div class="md:col-span-3 flex justify-end">
+          <button id="save-btn" type="submit" class="btn-primary  text-white px-6 py-2 rounded-lg font-medium flex items-center gap-2">
+            <i class="fas fa-save"></i> Save
+          </button>
+        </div>
+      </form>
+    </section>
+    
+    <!-- Summary Cards -->
+    <section class="mb-8">
+      <h3 class="text-xl font-bold text-green-900 mb-4">
+        <i class="fas fa-chart-bar mr-2"></i> Summary Statistics
+      </h3>
+      <div id="summaryCards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+    </section>
+    
+    <!-- Datasets Section -->
+    <section class="table-section rounded-xl shadow-md p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-xl font-bold text-green-900">
+          <i class="fas fa-database mr-2"></i> Saved Datasets
+        </h3>
+        <button onclick="downloadPDF()" class="btn-secondary text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2">
+          <i class="fas fa-file-pdf"></i> Download All as PDF
+        </button>
+      </div>
+      
+      <div class="overflow-x-auto">
+        <table class="w-full rounded-lg overflow-hidden" id="datasetTable"></table>
+      </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer class="mt-12 text-center text-gray-600 text-sm">
+      <p>Church Statistics Reports &copy; ${new Date().getFullYear()}</p>
+      <p class="mt-1">Track your church's growth and impact</p>
+    </footer>
+  </div>
+</body>
+</html>

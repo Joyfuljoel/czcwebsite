@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Church Statistics Form</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .form-section {
+      transition: all 0.3s ease;
+    }
+    .form-section:hover {
+      transform: translateY(-2px);
+    }
+    input:focus {
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+    @media (max-width: 640px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  
+     <!-- Header/Navigation -->
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center">
+               <div><img src="/image-files/logo-sda/adventist-symbol--treefrog.png" alt="SDA Logo"  class="w-10 h-10 object-cover"></div>
+                <a href="index.html" class="text-2xl font-bold text-green-600">Copperbelt Zambia Conference</a>
+            </div>
+            
+            <!-- Desktop Navigation -->
+            <nav class="hidden md:flex space-x-8">
+
+                <a href="index.html" class="text-green-800 font-medium hover:tex0t-green-600 transition">Home</a>
+                <a href="archives.html" class="text-gray-700 hover:text-green-600 transition">Sermons</a>
+                <a href="eventsandnews.html" class="text-gray-700 hover:text-green-600 transition">News</a>
+                <a href="eventsandnews.html" class="text-gray-700 hover:text-green-600 transition">Events</a>
+                <a href="archives.html" class="text-gray-700 hover:text-green-600 transition">Gallery</a>
+
+            </nav>
+            
+            <!-- Mobile menu button -->
+            <button id="menu-toggle" class="md:hidden text-gray-700 focus:outline-none">
+                <i class="fas fa-bars text-2xl"></i>
+            </button>
+        </div>
+        
+        <!-- Mobile Navigation -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white w-full px-4 pb-4">
+            <div class="flex flex-col space-y-3">
+                <a href="index.html" class="text-green-600 font-medium py-2 border-b">Home</a>
+                <a href="archives.html" class="text-gray-700 py-2 border-b">Sermons</a>
+                <a href="eventsandnews.html" class="text-gray-700 py-2 border-b">News</a>
+                <a href="eventsandnews.html" class="text-gray-700 py-2 border-b">Events</a>
+                <a href="archives.html" class="text-gray-700 py-2 border-b">Gallery</a>
+
+            </div>
+        </div>
+    </header>
+
+  <div class="container mx-auto px-4 py-8 max-w-6xl">
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+      <!-- Header Section -->
+      <div class="bg-indigo-700 text-white p-6 md:p-8">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-2xl md:text-3xl font-bold">Chalata Mission District</h1>
+            <p class="text-indigo-100 mt-1">Church Statistics Reporting Form</p>
+          </div>
+          <div class="hidden md:block">
+            <i class="fas fa-church text-4xl text-indigo-300"></i>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Form Section -->
+      <form action="preview.html" method="get" class="p-6 md:p-8">
+        <!-- Church Information -->
+        <div class="form-section bg-indigo-50 p-6 rounded-lg mb-8">
+          <h3 class="text-lg font-semibold text-indigo-800 mb-4 flex items-center">
+            <i class="fas fa-info-circle mr-2"></i> Church Information
+          </h3>
+          <div class="space-y-4">
+            <div>
+              <label for="church" class="block text-sm font-medium text-gray-700 mb-1">Church Name</label>
+              <input type="text" id="church" name="church" 
+                     class="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
+                     placeholder="Enter church name" required>
+            </div>
+            <div class="stats-grid">
+              <div>
+                <label for="churches" class="block text-sm font-medium text-gray-700 mb-1">Number of Churches</label>
+                <input type="number" id="churches" name="churches" 
+                       class="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
+                       min="0" required>
+              </div>
+              <div>
+                <label for="companies" class="block text-sm font-medium text-gray-700 mb-1">Number of Companies</label>
+                <input type="number" id="companies" name="companies" 
+                       class="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
+                       min="0" required>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Attendance Statistics -->
+        <div class="form-section bg-blue-50 p-6 rounded-lg mb-8">
+          <h3 class="text-lg font-semibold text-blue-800 mb-4 flex items-center">
+            <i class="fas fa-users mr-2"></i> Attendance Statistics
+          </h3>
+          <div class="stats-grid">
+            <div>
+              <label for="att2" class="block text-sm font-medium text-gray-700 mb-1">Attendance (2nd Sabbath)</label>
+              <input type="number" id="att2" name="att2" 
+                     class="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                     min="0" required>
+            </div>
+            <div>
+              <label for="att7" class="block text-sm font-medium text-gray-700 mb-1">Attendance (7th Sabbath)</label>
+              <input type="number" id="att7" name="att7" 
+                     class="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                     min="0" required>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Membership Changes -->
+        <div class="form-section bg-green-50 p-6 rounded-lg mb-8">
+          <h3 class="text-lg font-semibold text-green-800 mb-4 flex items-center">
+            <i class="fas fa-user-friends mr-2"></i> Membership Changes
+          </h3>
+          <div class="stats-grid">
+            <div>
+              <label for="start" class="block text-sm font-medium text-gray-700 mb-1">Members at Start</label>
+              <input type="number" id="start" name="start" 
+                     class="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500" 
+                     min="0" required>
+            </div>
+            <div>
+              <label for="bapt" class="block text-sm font-medium text-gray-700 mb-1">Baptised</label>
+              <input type="number" id="bapt" name="bapt" 
+                     class="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500" 
+                     min="0" required>
+            </div>
+            <div>
+              <label for="lettersin" class="block text-sm font-medium text-gray-700 mb-1">Letters Received</label>
+              <input type="number" id="lettersin" name="lettersin" 
+                     class="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500" 
+                     min="0" required>
+            </div>
+            <div>
+              <label for="dropped" class="block text-sm font-medium text-gray-700 mb-1">Dropped</label>
+              <input type="number" id="dropped" name="dropped" 
+                     class="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500" 
+                     min="0" required>
+            </div>
+            <div>
+              <label for="deaths" class="block text-sm font-medium text-gray-700 mb-1">Deaths</label>
+              <input type="number" id="deaths" name="deaths" 
+                     class="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500" 
+                     min="0" required>
+            </div>
+            <div>
+              <label for="end" class="block text-sm font-medium text-gray-700 mb-1">Members at End</label>
+              <input type="number" id="end" name="end" 
+                     class="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500" 
+                     min="0" required>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Sabbath School Statistics -->
+        <div class="form-section bg-purple-50 p-6 rounded-lg mb-8">
+          <h3 class="text-lg font-semibold text-purple-800 mb-4 flex items-center">
+            <i class="fas fa-book-open mr-2"></i> Sabbath School Statistics
+          </h3>
+          <div class="stats-grid">
+            <div>
+              <label for="ss2" class="block text-sm font-medium text-gray-700 mb-1">SS Attendance (2nd Sabbath)</label>
+              <input type="number" id="ss2" name="ss2" 
+                     class="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500" 
+                     min="0" required>
+            </div>
+            <div>
+              <label for="ss7" class="block text-sm font-medium text-gray-700 mb-1">SS Attendance (7th Sabbath)</label>
+              <input type="number" id="ss7" name="ss7" 
+                     class="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500" 
+                     min="0" required>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Submit Button -->
+        <div class="flex justify-center mt-8">
+          <button type="submit" 
+                  class="px-8 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all flex items-center">
+            <i class="fas fa-eye mr-2"></i> Preview Report
+          </button>
+        </div>
+      </form>
+      
+      <!-- Footer -->
+      <div class="bg-gray-100 px-6 py-4 text-center text-sm text-gray-600">
+        <p>© 2023 Chalata Mission District. All statistics are confidential.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
