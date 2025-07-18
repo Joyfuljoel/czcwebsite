@@ -343,60 +343,27 @@
         </div>
     </div>
 
-    <!-- Firebase Configuration Modal -->
-    <div id="configModal" class="modal" style="display: block;">
-        <div class="modal-content max-w-md">
-            <h2 class="text-2xl font-bold text-green-800 mb-6">Firebase Configuration</h2>
-            <p class="text-gray-600 mb-4">Please enter your Firebase configuration details:</p>
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-gray-700 mb-2">Database URL:</label>
-                    <input type="text" id="databaseURL" placeholder="https://your-project.firebaseio.com" 
-                           class="w-full p-3 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
-                </div>
-                
-                <div>
-                    <label class="block text-gray-700 mb-2">Project ID:</label>
-                    <input type="text" id="projectId" placeholder="your-project-id" 
-                           class="w-full p-3 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
-                </div>
-                
-                <div>
-                    <label class="block text-gray-700 mb-2">Storage Bucket:</label>
-                    <input type="text" id="storageBucket" placeholder="your-project.appspot.com" 
-                           class="w-full p-3 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
-                </div>
-                
-                <div>
-                    <label class="block text-gray-700 mb-2">API Key:</label>
-                    <input type="text" id="apiKey" placeholder="your-api-key" 
-                           class="w-full p-3 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
-                </div>
-            </div>
-            
-            <button id="saveConfig" class="w-full mt-6 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg transition duration-300">
-                <i class="fas fa-save mr-2"></i>Save Configuration
-            </button>
-            
-            <div class="mt-4 p-3 bg-yellow-100 border border-yellow-300 rounded-lg">
-                <p class="text-sm text-yellow-800">
-                    <i class="fas fa-info-circle mr-1"></i>
-                    You can find these details in your Firebase project settings.
-                </p>
-            </div>
-        </div>
-    </div>
+
 
     <script>
-        // Firebase configuration
-        let firebaseConfig = {};
+        // Firebase configuration - Pre-configured for CZC Website
+        let firebaseConfig = {
+            apiKey: "AIzaSyA8f_rfbNzhuYOlMWJ7tgzChB1FscTYuOI",
+            authDomain: "czcwebsite.firebaseapp.com",
+            databaseURL: "https://czcwebsite-default-rtdb.firebaseio.com",
+            projectId: "czcwebsite",
+            storageBucket: "czcwebsite.firebasestorage.app",
+            messagingSenderId: "632019422312",
+            appId: "1:632019422312:web:4992f744b04e60e4057fdd",
+            measurementId: "G-3ESPCLBJ04"
+        };
+        
         let database = null;
         let storage = null;
         let isAdminLoggedIn = false;
         let currentFiles = [];
 
-        // Initialize Firebase after configuration
+        // Initialize Firebase
         function initializeFirebase() {
             try {
                 firebase.initializeApp(firebaseConfig);
@@ -404,59 +371,16 @@
                 storage = firebase.storage();
                 console.log('Firebase initialized successfully');
                 loadFiles();
-                hideConfigModal();
             } catch (error) {
                 console.error('Firebase initialization error:', error);
                 showNotification('Firebase configuration error: ' + error.message, 'error');
             }
         }
 
-        // Configuration modal functions
-        function hideConfigModal() {
-            document.getElementById('configModal').style.display = 'none';
-        }
-
-        function showConfigModal() {
-            document.getElementById('configModal').style.display = 'block';
-        }
-
-        // Save Firebase configuration
-        document.getElementById('saveConfig').addEventListener('click', () => {
-            const databaseURL = document.getElementById('databaseURL').value;
-            const projectId = document.getElementById('projectId').value;
-            const storageBucket = document.getElementById('storageBucket').value;
-            const apiKey = document.getElementById('apiKey').value;
-
-            if (!databaseURL || !projectId || !storageBucket || !apiKey) {
-                showNotification('Please fill in all configuration fields', 'error');
-                return;
-            }
-
-            firebaseConfig = {
-                apiKey: apiKey,
-                databaseURL: databaseURL,
-                projectId: projectId,
-                storageBucket: storageBucket
-            };
-
-            // Save to localStorage for future use
-            localStorage.setItem('firebaseConfig', JSON.stringify(firebaseConfig));
-            
+        // Auto-initialize Firebase with pre-configured settings
+        document.addEventListener('DOMContentLoaded', () => {
             initializeFirebase();
         });
-
-        // Load saved configuration
-        function loadSavedConfig() {
-            const saved = localStorage.getItem('firebaseConfig');
-            if (saved) {
-                firebaseConfig = JSON.parse(saved);
-                document.getElementById('databaseURL').value = firebaseConfig.databaseURL || '';
-                document.getElementById('projectId').value = firebaseConfig.projectId || '';
-                document.getElementById('storageBucket').value = firebaseConfig.storageBucket || '';
-                document.getElementById('apiKey').value = firebaseConfig.apiKey || '';
-                initializeFirebase();
-            }
-        }
 
         // Notification system
         function showNotification(message, type = 'success') {
@@ -872,7 +796,6 @@
         window.addEventListener('click', (e) => {
             const adminModal = document.getElementById('adminModal');
             const imageModal = document.getElementById('imageModal');
-            const configModal = document.getElementById('configModal');
             
             if (e.target === adminModal) {
                 adminModal.style.display = 'none';
@@ -882,10 +805,7 @@
             }
         });
 
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            loadSavedConfig();
-        });
+
     </script>
 </body>
 </html>
