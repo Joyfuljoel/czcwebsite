@@ -3,14 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Firebase Archive Center</title>
+    <title>CZC Archive Center</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
     
     <style>
         /* Custom styles */
@@ -131,7 +126,7 @@
             <div class="flex justify-between items-center">
                 <div class="flex items-center">
                     <i class="fas fa-archive text-2xl text-green-600 mr-3"></i>
-                    <h1 class="text-xl md:text-2xl font-bold text-green-800">Firebase Archive Center</h1>
+                    <h1 class="text-xl md:text-2xl font-bold text-green-800">CZC Archive Center</h1>
                 </div>
                 <button id="adminBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition duration-300">
                     <i class="fas fa-user-shield mr-2"></i>Admin Panel
@@ -343,120 +338,35 @@
         </div>
     </div>
 
-    <!-- Firebase Configuration Modal -->
-    <div id="configModal" class="modal" style="display: block;">
-        <div class="modal-content max-w-md">
-            <h2 class="text-2xl font-bold text-green-800 mb-6">Firebase Configuration</h2>
-            <p class="text-gray-600 mb-4">Please enter your Firebase configuration details:</p>
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-gray-700 mb-2">Database URL:</label>
-                    <input type="text" id="databaseURL" placeholder="https://your-project.firebaseio.com" 
-                           class="w-full p-3 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
-                </div>
-                
-                <div>
-                    <label class="block text-gray-700 mb-2">Project ID:</label>
-                    <input type="text" id="projectId" placeholder="your-project-id" 
-                           class="w-full p-3 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
-                </div>
-                
-                <div>
-                    <label class="block text-gray-700 mb-2">Storage Bucket:</label>
-                    <input type="text" id="storageBucket" placeholder="your-project.appspot.com" 
-                           class="w-full p-3 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
-                </div>
-                
-                <div>
-                    <label class="block text-gray-700 mb-2">API Key:</label>
-                    <input type="text" id="apiKey" placeholder="your-api-key" 
-                           class="w-full p-3 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
-                </div>
-            </div>
-            
-            <button id="saveConfig" class="w-full mt-6 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg transition duration-300">
-                <i class="fas fa-save mr-2"></i>Save Configuration
-            </button>
-            
-            <div class="mt-4 p-3 bg-yellow-100 border border-yellow-300 rounded-lg">
-                <p class="text-sm text-yellow-800">
-                    <i class="fas fa-info-circle mr-1"></i>
-                    You can find these details in your Firebase project settings.
-                </p>
-            </div>
-        </div>
-    </div>
+    <!-- Firebase Configuration and App Logic -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-analytics.js";
+        import { getDatabase, ref, push, set, remove, onValue } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
+        import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-storage.js";
 
-    <script>
-        // Firebase configuration
-        let firebaseConfig = {};
-        let database = null;
-        let storage = null;
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyA8f_rfbNzhuYOlMWJ7tgzChB1FscTYuOI",
+            authDomain: "czcwebsite.firebaseapp.com",
+            databaseURL: "https://czcwebsite-default-rtdb.firebaseio.com",
+            projectId: "czcwebsite",
+            storageBucket: "czcwebsite.firebasestorage.app",
+            messagingSenderId: "632019422312",
+            appId: "1:632019422312:web:4992f744b04e60e4057fdd",
+            measurementId: "G-3ESPCLBJ04"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const database = getDatabase(app);
+        const storage = getStorage(app);
+
+        // Global variables
         let isAdminLoggedIn = false;
         let currentFiles = [];
-
-        // Initialize Firebase after configuration
-        function initializeFirebase() {
-            try {
-                firebase.initializeApp(firebaseConfig);
-                database = firebase.database();
-                storage = firebase.storage();
-                console.log('Firebase initialized successfully');
-                loadFiles();
-                hideConfigModal();
-            } catch (error) {
-                console.error('Firebase initialization error:', error);
-                showNotification('Firebase configuration error: ' + error.message, 'error');
-            }
-        }
-
-        // Configuration modal functions
-        function hideConfigModal() {
-            document.getElementById('configModal').style.display = 'none';
-        }
-
-        function showConfigModal() {
-            document.getElementById('configModal').style.display = 'block';
-        }
-
-        // Save Firebase configuration
-        document.getElementById('saveConfig').addEventListener('click', () => {
-            const databaseURL = document.getElementById('databaseURL').value;
-            const projectId = document.getElementById('projectId').value;
-            const storageBucket = document.getElementById('storageBucket').value;
-            const apiKey = document.getElementById('apiKey').value;
-
-            if (!databaseURL || !projectId || !storageBucket || !apiKey) {
-                showNotification('Please fill in all configuration fields', 'error');
-                return;
-            }
-
-            firebaseConfig = {
-                apiKey: apiKey,
-                databaseURL: databaseURL,
-                projectId: projectId,
-                storageBucket: storageBucket
-            };
-
-            // Save to localStorage for future use
-            localStorage.setItem('firebaseConfig', JSON.stringify(firebaseConfig));
-            
-            initializeFirebase();
-        });
-
-        // Load saved configuration
-        function loadSavedConfig() {
-            const saved = localStorage.getItem('firebaseConfig');
-            if (saved) {
-                firebaseConfig = JSON.parse(saved);
-                document.getElementById('databaseURL').value = firebaseConfig.databaseURL || '';
-                document.getElementById('projectId').value = firebaseConfig.projectId || '';
-                document.getElementById('storageBucket').value = firebaseConfig.storageBucket || '';
-                document.getElementById('apiKey').value = firebaseConfig.apiKey || '';
-                initializeFirebase();
-            }
-        }
 
         // Notification system
         function showNotification(message, type = 'success') {
@@ -504,11 +414,10 @@
 
         // Load files from Firebase
         function loadFiles() {
-            if (!database) return;
-            
             document.getElementById('loadingIndicator').style.display = 'block';
             
-            database.ref('files').on('value', (snapshot) => {
+            const filesRef = ref(database, 'files');
+            onValue(filesRef, (snapshot) => {
                 currentFiles = [];
                 const data = snapshot.val();
                 if (data) {
@@ -628,7 +537,7 @@
         }
 
         // Download file
-        function downloadFile(url, filename) {
+        window.downloadFile = function(url, filename) {
             const link = document.createElement('a');
             link.href = url;
             link.download = filename;
@@ -639,7 +548,7 @@
         }
 
         // Image modal functions
-        function openImageModal(src, title) {
+        window.openImageModal = function(src, title) {
             document.getElementById('modalImage').src = src;
             document.getElementById('imageTitle').textContent = title;
             document.getElementById('imageModal').style.display = 'block';
@@ -730,11 +639,6 @@
         });
 
         async function uploadFiles(files, category, title, description) {
-            if (!storage || !database) {
-                showNotification('Firebase not initialized', 'error');
-                return;
-            }
-
             const progressContainer = document.getElementById('uploadProgress');
             const progressFill = document.getElementById('progressFill');
             const progressText = document.getElementById('progressText');
@@ -746,11 +650,11 @@
             try {
                 for (let i = 0; i < files.length; i++) {
                     const file = files[i];
-                    const fileRef = storage.ref().child(`${category}/${Date.now()}_${file.name}`);
+                    const fileRef = storageRef(storage, `${category}/${Date.now()}_${file.name}`);
                     
                     progressText.textContent = `Uploading ${file.name} (${i + 1}/${files.length})...`;
                     
-                    const uploadTask = fileRef.put(file);
+                    const uploadTask = uploadBytesResumable(fileRef, file);
                     
                     await new Promise((resolve, reject) => {
                         uploadTask.on('state_changed', 
@@ -760,7 +664,7 @@
                             },
                             reject,
                             async () => {
-                                const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+                                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
                                 
                                 // Save file metadata to database
                                 const fileData = {
@@ -774,7 +678,8 @@
                                     uploadDate: Date.now()
                                 };
                                 
-                                await database.ref('files').push(fileData);
+                                const filesRef = ref(database, 'files');
+                                await push(filesRef, fileData);
                                 resolve();
                             }
                         );
@@ -830,18 +735,19 @@
         }
 
         // Delete file
-        async function deleteFile(fileId) {
+        window.deleteFile = async function(fileId) {
             if (!confirm('Are you sure you want to delete this file?')) return;
             
             try {
                 const file = currentFiles.find(f => f.id === fileId);
                 if (file) {
                     // Delete from storage
-                    const fileRef = storage.refFromURL(file.downloadURL);
-                    await fileRef.delete();
+                    const fileRef = storageRef(storage, file.downloadURL);
+                    await deleteObject(fileRef);
                     
                     // Delete from database
-                    await database.ref('files/' + fileId).remove();
+                    const dbRef = ref(database, 'files/' + fileId);
+                    await remove(dbRef);
                     
                     showNotification('File deleted successfully', 'success');
                 }
@@ -851,13 +757,14 @@
             }
         }
 
-        // Edit file (placeholder function)
-        function editFile(fileId) {
+        // Edit file
+        window.editFile = function(fileId) {
             const file = currentFiles.find(f => f.id === fileId);
             if (file) {
                 const newTitle = prompt('Enter new title:', file.title);
                 if (newTitle && newTitle !== file.title) {
-                    database.ref('files/' + fileId + '/title').set(newTitle)
+                    const dbRef = ref(database, 'files/' + fileId + '/title');
+                    set(dbRef, newTitle)
                         .then(() => showNotification('File updated successfully', 'success'))
                         .catch(error => showNotification('Update failed: ' + error.message, 'error'));
                 }
@@ -872,7 +779,6 @@
         window.addEventListener('click', (e) => {
             const adminModal = document.getElementById('adminModal');
             const imageModal = document.getElementById('imageModal');
-            const configModal = document.getElementById('configModal');
             
             if (e.target === adminModal) {
                 adminModal.style.display = 'none';
@@ -884,7 +790,8 @@
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', () => {
-            loadSavedConfig();
+            loadFiles();
+            showNotification('CZC Archive Center loaded successfully', 'success');
         });
     </script>
 </body>
